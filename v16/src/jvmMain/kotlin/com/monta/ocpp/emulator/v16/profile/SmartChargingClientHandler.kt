@@ -190,9 +190,9 @@ class SmartChargingClientHandler(
             return false
         }
 
-        GlobalLogger.info(transaction, "received charging profile :)")
+        GlobalLogger.error(transaction, "received charging profile :)")
 
-        transaction {
+        val result = transaction {
             transaction.chargingProfile = request.csChargingProfiles
         }
 

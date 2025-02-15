@@ -4,18 +4,19 @@ import com.monta.library.ocpp.v16.smartcharge.ChargingProfile
 import com.monta.library.ocpp.v16.smartcharge.ChargingSchedule
 import com.monta.library.ocpp.v16.smartcharge.ChargingSchedulePeriod
 import com.monta.ocpp.emulator.chargepointtransaction.entity.ChargePointTransactionDAO
+import com.monta.ocpp.emulator.logger.GlobalLogger
 import java.time.Instant
 
 object ChargingProfileCalculator {
 
-    fun getWatts(
+    suspend fun getWatts(
         transaction: ChargePointTransactionDAO
     ): Double? {
         val (ampsPerPhase, phases) = getAmps(transaction) ?: return null
         return (ampsPerPhase * 230.0) * phases.toDouble()
     }
 
-    private fun getAmps(
+    private suspend fun getAmps(
         transaction: ChargePointTransactionDAO,
         chargingProfile: ChargingProfile? = transaction.chargingProfile
     ): Pair<Double, Int>? {
@@ -30,7 +31,8 @@ object ChargingProfileCalculator {
         }
 
         val now = Instant.now()
-        val scheduleStart = chargingSchedule.startSchedule?.toInstant() ?: transaction.createdAt
+        // Correct this to always be the transaction start
+        val scheduleStart = /*chargingSchedule.startSchedule?.toInstant() ?:*/ transaction.createdAt
         val scheduleEnd: Instant? = chargingSchedule.duration?.let { duration ->
             scheduleStart.plusSeconds(duration.toLong())
         }
@@ -44,14 +46,18 @@ object ChargingProfileCalculator {
         // Ensure our periods are sorted by the start duration
         val sortedPeriods = chargingSchedule.chargingSchedulePeriod.sortedBy { it.startPeriod }
 
+        //GlobalLogger.info(transaction, "have " + sortedPeriods.size + " periods, start: " + scheduleStart)
+
         // Iterate through our periods
         for (chargingSchedulePeriod in sortedPeriods) {
+
             val chargingLimit = chargingSchedulePeriod.checkAndGetLimit(
                 scheduleStart = scheduleStart,
                 minChargingRate = chargingSchedule.minChargingRate,
                 checkDate = now
             )
             if (chargingLimit != null) {
+                GlobalLogger.info(transaction, "has charging limit - " + chargingLimit)
                 return chargingLimit
             }
         }

@@ -121,7 +121,7 @@ class ChargePointTransactionDAO(
         return connectorPosition
     }
 
-    fun getChargingProfileWatts(): Double? {
+    suspend fun getChargingProfileWatts(): Double? {
         return ChargingProfileCalculator.getWatts(this)
     }
 

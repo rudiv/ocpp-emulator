@@ -112,8 +112,9 @@ class SchedulerService(
             transaction.chargePointConnector
         }
 
+        val kw = transaction.getChargingProfileWatts();
         transaction {
-            connector.updateKw(transaction.getChargingProfileWatts())
+            connector.updateKw(kw)
         }
 
         connector.setStatus(connector.calculateState())

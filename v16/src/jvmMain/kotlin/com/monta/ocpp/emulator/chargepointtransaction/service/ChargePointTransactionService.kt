@@ -18,6 +18,9 @@ class ChargePointTransactionService(
         externalId: Int,
         idTag: String
     ): ChargePointTransactionDAO {
+        // Clear out any existing transactions with this ID
+        transaction { chargePointTransactionRepository.removeByExternalId(externalId) }
+
         return transaction {
             ChargePointTransactionDAO.newInstance(
                 chargePoint = chargePoint,
